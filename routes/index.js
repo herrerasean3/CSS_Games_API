@@ -14,4 +14,10 @@ router.put('/:id', db.editPost);
 
 router.delete('/:id', db.deletePost);
 
+router.get('/pop', db.populateGames);
+router.get('/pop/genres', db.populateGenres);
+router.get('/pop/summ', db.populateSummaries);
+router.get('/pop/story', db.populateStorylines);
+router.get('/pop/cover', db.populateCovers);
+
 module.exports = router;

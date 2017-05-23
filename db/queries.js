@@ -1,6 +1,7 @@
 let pgp = require('pg-promise')();
 let connString = process.env.DATABASE_URL;
 let db = pgp(connString);
+var unirest = require('unirest');
 
 /*
 Tweedr uses a single table database. To this end, all relevant data is contained in the table "tweed".
@@ -38,6 +39,88 @@ function readAllPosts(req, res, next) {
 // "OP" contains the post to which the parameter ID is pointing to.
 // "replies" contains all posts with a reply_id matching the tweed_id of the OP.
 // targetID is present at several points in the code, ensuring that there is no way for users to touch the placeholder post.
+
+function populateGames() {
+	// These code snippets use an open-source library. http://unirest.io/nodejs
+
+	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=*&limit=50&offset=$0&order=release_dates.date:desc:min`)
+	.header("X-Mashape-Key", "TuXniFMGOQmshjKDomTdGg04leQNp1fHjPmjsncnYr5Q63eBW2")
+	.header("Accept", "application/json")
+	.end(function (result) {
+  	console.log(result.status, result.headers);
+  	
+  	for (var i = 0; i < result.body.length; i++) {
+  	db.none('INSERT INTO games(game_title)' + 
+		'values(${name})',
+		result.body[i])
+  	}
+	});
+}
+
+function populateGenres() {
+	// These code snippets use an open-source library. http://unirest.io/nodejs
+
+	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=*&limit=50&offset=$0`)
+	.header("X-Mashape-Key", "TuXniFMGOQmshjKDomTdGg04leQNp1fHjPmjsncnYr5Q63eBW2")
+	.header("Accept", "application/json")
+	.end(function (result) {
+  	console.log(result.status, result.headers);
+  	
+  	for (var i = 0; i < result.body.length; i++) {
+  	db.none('INSERT INTO genres(genre)' + 
+		'values(${name})',
+		result.body[i])
+  	}
+	});
+}
+
+function populateSummaries() {
+	// These code snippets use an open-source library. http://unirest.io/nodejs
+
+	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=*&limit=50&offset=$0&order=release_dates.date:desc:min`)
+	.header("X-Mashape-Key", "TuXniFMGOQmshjKDomTdGg04leQNp1fHjPmjsncnYr5Q63eBW2")
+	.header("Accept", "application/json")
+	.end(function (result) {
+  	console.log(result.status, result.headers);
+  	
+  	for (var i = 0; i < result.body.length; i++) {
+  	db.none('UPDATE games SET game_desc_short = ${summary} WHERE game_id =' + `${i+1}`,
+		result.body[i])
+  	}
+	});
+}
+
+function populateStorylines() {
+	// These code snippets use an open-source library. http://unirest.io/nodejs
+
+	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=*&limit=50&offset=$0&order=release_dates.date:desc:min`)
+	.header("X-Mashape-Key", "TuXniFMGOQmshjKDomTdGg04leQNp1fHjPmjsncnYr5Q63eBW2")
+	.header("Accept", "application/json")
+	.end(function (result) {
+  	console.log(result.status, result.headers);
+  	
+  	for (var i = 0; i < result.body.length; i++) {
+  	db.none('UPDATE games SET game_desc = ${storyline} WHERE game_id =' + `${i+1}`,
+		result.body[i])
+  	}
+	});
+}
+
+function populateCovers() {
+	// These code snippets use an open-source library. http://unirest.io/nodejs
+
+	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=*&limit=50&offset=$0&order=release_dates.date:desc:min`)
+	.header("X-Mashape-Key", "TuXniFMGOQmshjKDomTdGg04leQNp1fHjPmjsncnYr5Q63eBW2")
+	.header("Accept", "application/json")
+	.end(function (result) {
+  	console.log(result.status, result.headers);
+  	
+  	for (var i = 0; i < result.body.length; i++) {
+  	db.none('UPDATE games SET game_cover = ${url} WHERE game_id =' + `${i+1}`,
+		result.body[i].cover)
+  	}
+	});
+}
 
 function getPostReplies(req, res, next) {
 	let targetID = parseInt(req.params.id) + 1;
@@ -157,6 +240,11 @@ function editPost(req, res, next) {
 }
 
 module.exports = {
+	populateGames: populateGames,
+	populateGenres: populateGenres,
+	populateSummaries: populateSummaries,
+	populateStorylines: populateStorylines,
+	populateCovers: populateCovers,
 	readAllPosts: readAllPosts,
 	getPostReplies: getPostReplies,
 	submitPost: submitPost,
