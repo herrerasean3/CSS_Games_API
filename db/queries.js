@@ -152,24 +152,12 @@ function getGamesByGenre(req, res, next) {
 }
 
 function getSingleGame(req, res, next) {
-	// db.task(t => {
-	// 	return t.one('SELECT AVG(review_score) FROM reviews WHERE game_id = $1', req.params.gameid)
-	// 	.then(score => {
-	// 			t.none('UPDATE games SET average_score = $1 WHERE game_id = $2', [score, req.params.gameid])
-	// 		})
-	// 	})
-	db.task(t => {
-		return t.batch([
-			t.one('SELECT * FROM games WHERE game_id = $1', req.params.gameid),
-			t.many('SELECT * FROM reviews WHERE game_id = $1', req.params.gameid)
-			])
-	})
-	.then(function(data) {
+			db.one('SELECT * FROM games WHERE game_id = $1', req.params.gameid)
+	.then(data => {
 			res.status(200)
 			.json({
 				status: 'success',
-				game: data[0],
-				reviews: data[1]
+				game: data
 			});
 		})
 		.catch(function(err) {
@@ -211,8 +199,8 @@ ______ _____ _   _ _____ _____ _    _ _____
 // Grabs the entire tweed table, save for the placeholder post.
 // Sorts the posts by timestamp, then ID.
 
-function readAllPosts(req, res, next) {
-	db.any('SELECT * FROM tweed WHERE tweed_id > 1 ORDER BY tweed_timestamp DESC, tweed_id DESC')
+function readReviews(req, res, next) {
+	db.any('SELECT * FROM reviews WHERE target_id = $1 ORDER BY review_timestamp DESC, review_id DESC', req.params.gameid)
 		.then(function(data) {
 			res.status(200)
 			.json({
@@ -225,78 +213,20 @@ function readAllPosts(req, res, next) {
 		});
 }
 
-// Called whenever '/reply/:id' recieves a GET request.
-// Using a db.task, two database queries are made in a batch.
-// "OP" contains the post to which the parameter ID is pointing to.
-// "replies" contains all posts with a reply_id matching the tweed_id of the OP.
-// targetID is present at several points in the code, ensuring that there is no way for users to touch the placeholder post.
-
-function getPostReplies(req, res, next) {
-	let targetID = parseInt(req.params.id) + 1;
-	if (targetID < 2) {
-		targetID = 2;
-	}
-
-	db.task(t => {
-		return t.batch([
-			t.one('SELECT * FROM tweed WHERE tweed_id = $1', targetID),
-			t.any('SELECT * FROM tweed WHERE reply_id = $1 AND tweed_id > 1 ORDER BY tweed_timestamp DESC, tweed_id DESC', targetID)
-			]);
-	})
-	.then(data => {
-			res.status(200)
-			.json({
-				status: 'success',
-				OP: data[0],
-				replies: data[1]
-			});
-		})
-		.catch(function(err) {
-			return next(err);
-		});
-}
-
 // Called when a POST request is sent to the index.
 // Takes "username" and "tweed_content" as values for the request.
 // Timestamp is generated automatically, and for new posts, reply ID points to the placeholder post.
 
-function submitPost(req, res, next) {
+function submitReview(req, res, next) {
 
-	db.none('INSERT INTO reviews(username, review_short, review, review_score, review_timestamp, game_id)' + 
-		'values(${username}, ${review_short}, ${review}, ${review_score}, CURRENT_TIMESTAMP,' `${req.params.id})`,
+	db.none('INSERT INTO reviews(username, review_short, review, review_score, target_id)' + 
+		'values(${username}, ${review_short}, ${review}, ${review_score},' + `${req.params.gameid})`,
 		req.body)
 	.then(function() {
 		res.status(200)
 		.json({
           status: 'success',
           message: 'Review Submitted'
-        });
-    })
-    .catch(function(err) {
-      return next(err);
-    });
-}
-
-// Called when a POST request is sent to '/reply/:id'.
-// Takes the same values as the previous function.
-// Uses the id from the URL to determine which post is being replied to and set a replyID accordingly.
-// This is done via the targetID variable.
-
-function submitReply(req, res, next) {
-	console.log(req.body)
-	let targetID = parseInt(req.params.id) + 1;
-	if (targetID < 2) {
-		targetID = 2;
-	}
-
-	db.none('INSERT INTO tweed(username,tweed_content,tweed_timestamp,reply_id)' + 
-		'values(${username}, ${tweed_content}, CURRENT_TIMESTAMP,' + `${targetID})`,
-		req.body)
-	.then(function() {
-		res.status(200)
-		.json({
-          status: 'success',
-          message: 'Reply Submitted'
         });
     })
     .catch(function(err) {
@@ -357,10 +287,9 @@ module.exports = {
 	populateCovers: populateCovers,
 	getAllGames: getAllGames,
 	getSingleGame: getSingleGame,
-	readAllPosts: readAllPosts,
-	getPostReplies: getPostReplies,
-	submitPost: submitPost,
-	submitReply: submitReply,
+	createGame: createGame,
+	readReviews: readReviews,
+	submitReview: submitReview,
 	deletePost: deletePost,
 	editPost: editPost
 };

@@ -18,8 +18,7 @@ CREATE TABLE games (
     game_cover VARCHAR,
     game_genre INTEGER REFERENCES genres(genre_id),
     game_desc_short VARCHAR,
-    game_desc VARCHAR,
-    average_score FLOAT(4)
+    game_desc VARCHAR
 );
 
 DROP TABLE IF EXISTS reviews;
@@ -30,6 +29,6 @@ CREATE TABLE reviews (
 	review_short VARCHAR,
 	review VARCHAR NOT NULL,
 	review_score INTEGER NOT NULL,
-	review_timestamp TIMESTAMP NOT NULL,
-	game_id INTEGER REFERENCES games(game_id)
+	review_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	target_id INTEGER REFERENCES games(game_id)
 );
