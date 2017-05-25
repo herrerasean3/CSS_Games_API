@@ -18,11 +18,11 @@ router.get('/game/:gameid/reviews', db.readReviews);
 
 router.post('/game/:gameid/reviews', db.submitReview);
 
-router.post('/', db.submitPost);
+// router.post('/', db.submitPost);
 
-router.put('/:id', db.editPost);
+// router.put('/:id', db.editPost);
 
-router.delete('/:id', db.deletePost);
+// router.delete('/:id', db.deletePost);
 
 //Population Routes. To be commented out when API is launched.
 
