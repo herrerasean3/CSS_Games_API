@@ -309,6 +309,7 @@ module.exports = {
 	getSingleGame: getSingleGame,
 	createGame: createGame,
 	editGame: editGame,
+	deleteGame: deleteGame,
 	readReviews: readReviews,
 	submitReview: submitReview,
 	deleteReview: deleteReview,
