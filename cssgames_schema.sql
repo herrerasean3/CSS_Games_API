@@ -19,8 +19,7 @@ CREATE TABLE games (
     game_genre INTEGER REFERENCES genres(genre_id),
     game_desc_short VARCHAR,
     game_desc VARCHAR,
-    average_score FLOAT(4),
-    expansion_id INTEGER REFERENCES games(game_id)
+    average_score FLOAT(4)
 );
 
 DROP TABLE IF EXISTS reviews;
@@ -28,9 +27,9 @@ DROP TABLE IF EXISTS reviews;
 CREATE TABLE reviews (
 	review_id SERIAL PRIMARY KEY NOT NULL,
 	username VARCHAR(20) NOT NULL,
-	review_short VARCHAR(256),
+	review_short VARCHAR,
 	review VARCHAR NOT NULL,
 	review_score INTEGER NOT NULL,
 	review_timestamp TIMESTAMP NOT NULL,
-	game_id INTEGER REFERENCES games(game_id) NOT NULL
+	game_id INTEGER REFERENCES games(game_id)
 );

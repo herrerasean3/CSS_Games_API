@@ -16,29 +16,19 @@ username is a VARCHAR field, and currently is uncapped. Please avoid colossal us
 tweed_content is also a VARCHAR field, but limited to 120 characters in the spirit of Twitter.
 */
 
-// Called whenever the index recieves a GET request.
-// Grabs the entire tweed table, save for the placeholder post.
-// Sorts the posts by timestamp, then ID.
 
-function readAllPosts(req, res, next) {
-	db.any('SELECT * FROM tweed WHERE tweed_id > 1 ORDER BY tweed_timestamp DESC, tweed_id DESC')
-		.then(function(data) {
-			res.status(200)
-			.json({
-				status: 'success',
-				data: data
-			});
-		})
-		.catch(function(err) {
-			return next(err);
-		});
-}
 
-// Called whenever '/reply/:id' recieves a GET request.
-// Using a db.task, two database queries are made in a batch.
-// "OP" contains the post to which the parameter ID is pointing to.
-// "replies" contains all posts with a reply_id matching the tweed_id of the OP.
-// targetID is present at several points in the code, ensuring that there is no way for users to touch the placeholder post.
+/*
+
+______ ___________ _   _ _       ___ _____ _____ 
+| ___ \  _  | ___ \ | | | |     / _ \_   _|  ___|
+| |_/ / | | | |_/ / | | | |    / /_\ \| | | |__  
+|  __/| | | |  __/| | | | |    |  _  || | |  __| 
+| |   \ \_/ / |   | |_| | |____| | | || | | |___ 
+\_|    \___/\_|    \___/\_____/\_| |_/\_/ \____/ 
+
+*/
+
 
 function populateGames() {
 	// These code snippets use an open-source library. http://unirest.io/nodejs
@@ -60,7 +50,7 @@ function populateGames() {
 function populateGenres() {
 	// These code snippets use an open-source library. http://unirest.io/nodejs
 
-	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/games/?fields=*&limit=50&offset=$0`)
+	unirest.get(`https://igdbcom-internet-game-database-v1.p.mashape.com/genres/?fields=*&limit=50&offset=$0`)
 	.header("X-Mashape-Key", "TuXniFMGOQmshjKDomTdGg04leQNp1fHjPmjsncnYr5Q63eBW2")
 	.header("Accept", "application/json")
 	.end(function (result) {
@@ -122,6 +112,125 @@ function populateCovers() {
 	});
 }
 
+/*
+
+ _____   ___  ___  ___ _____ _____ 
+|  __ \ / _ \ |  \/  ||  ___/  ___|
+| |  \// /_\ \| .  . || |__ \ `--. 
+| | __ |  _  || |\/| ||  __| `--. \
+| |_\ \| | | || |  | || |___/\__/ /
+ \____/\_| |_/\_|  |_/\____/\____/ 
+
+*/
+
+function getAllGames(req, res, next) {
+	db.any('SELECT * FROM games ORDER BY game_id DESC')
+	.then(function(data) {
+			res.status(200)
+			.json({
+				status: 'success',
+				game: data
+			});
+		})
+		.catch(function(err) {
+			return next(err);
+		});
+}
+
+function getGamesByGenre(req, res, next) {
+	db.any('SELECT * FROM games JOIN genres ON games.game_genre = genres.genre_id')
+	.then(function(data) {
+			res.status(200)
+			.json({
+				status: 'success',
+				game: data
+			});
+		})
+		.catch(function(err) {
+			return next(err);
+		});
+}
+
+function getSingleGame(req, res, next) {
+	// db.task(t => {
+	// 	return t.one('SELECT AVG(review_score) FROM reviews WHERE game_id = $1', req.params.gameid)
+	// 	.then(score => {
+	// 			t.none('UPDATE games SET average_score = $1 WHERE game_id = $2', [score, req.params.gameid])
+	// 		})
+	// 	})
+	db.task(t => {
+		return t.batch([
+			t.one('SELECT * FROM games WHERE game_id = $1', req.params.gameid),
+			t.many('SELECT * FROM reviews WHERE game_id = $1', req.params.gameid)
+			])
+	})
+	.then(function(data) {
+			res.status(200)
+			.json({
+				status: 'success',
+				game: data[0],
+				reviews: data[1]
+			});
+		})
+		.catch(function(err) {
+			return next(err);
+		});
+}
+
+function createGame(req, res, next) {
+	db.none('INSERT INTO games(game_title, game_cover, game_genre, game_desc_short, game_desc)' + 
+		'values(${game_title}, ${game_cover}, ${game_genre}, ${game_desc_short}, ${game_desc})',
+		req.body)
+	.then(function() {
+		res.status(200)
+		.json({
+          status: 'success',
+          message: 'Game Submitted'
+        });
+    })
+    .catch(function(err) {
+      return next(err);
+    });
+}
+
+/*
+
+______ _____ _   _ _____ _____ _    _ _____ 
+| ___ \  ___| | | |_   _|  ___| |  | /  ___|
+| |_/ / |__ | | | | | | | |__ | |  | \ `--. 
+|    /|  __|| | | | | | |  __|| |/\| |`--. \
+| |\ \| |___\ \_/ /_| |_| |___\  /\  /\__/ /
+\_| \_\____/ \___/ \___/\____/ \/  \/\____/ 
+
+
+*/
+
+
+
+// Called whenever the index recieves a GET request.
+// Grabs the entire tweed table, save for the placeholder post.
+// Sorts the posts by timestamp, then ID.
+
+function readAllPosts(req, res, next) {
+	db.any('SELECT * FROM tweed WHERE tweed_id > 1 ORDER BY tweed_timestamp DESC, tweed_id DESC')
+		.then(function(data) {
+			res.status(200)
+			.json({
+				status: 'success',
+				data: data
+			});
+		})
+		.catch(function(err) {
+			return next(err);
+		});
+}
+
+// Called whenever '/reply/:id' recieves a GET request.
+// Using a db.task, two database queries are made in a batch.
+// "OP" contains the post to which the parameter ID is pointing to.
+// "replies" contains all posts with a reply_id matching the tweed_id of the OP.
+// targetID is present at several points in the code, ensuring that there is no way for users to touch the placeholder post.
+
 function getPostReplies(req, res, next) {
 	let targetID = parseInt(req.params.id) + 1;
 	if (targetID < 2) {
@@ -152,14 +261,15 @@ function getPostReplies(req, res, next) {
 // Timestamp is generated automatically, and for new posts, reply ID points to the placeholder post.
 
 function submitPost(req, res, next) {
-	db.none('INSERT INTO tweed(username,tweed_content,tweed_timestamp,reply_id)' + 
-		'values(${username}, ${tweed_content}, CURRENT_TIMESTAMP, 1)',
+
+	db.none('INSERT INTO reviews(username, review_short, review, review_score, review_timestamp, game_id)' + 
+		'values(${username}, ${review_short}, ${review}, ${review_score}, CURRENT_TIMESTAMP,' `${req.params.id})`,
 		req.body)
 	.then(function() {
 		res.status(200)
 		.json({
           status: 'success',
-          message: 'Tweed Submitted'
+          message: 'Review Submitted'
         });
     })
     .catch(function(err) {
@@ -245,6 +355,8 @@ module.exports = {
 	populateSummaries: populateSummaries,
 	populateStorylines: populateStorylines,
 	populateCovers: populateCovers,
+	getAllGames: getAllGames,
+	getSingleGame: getSingleGame,
 	readAllPosts: readAllPosts,
 	getPostReplies: getPostReplies,
 	submitPost: submitPost,

@@ -4,7 +4,8 @@ var router = express.Router();
 var db = require('../db/queries');
 
 /* GET home page. */
-router.get('/', db.readAllPosts);
+router.get('/game', db.getAllGames);
+router.get('/game/:gameid', db.getSingleGame);
 router.get('/reply/:id', db.getPostReplies);
 
 router.post('/', db.submitPost);
