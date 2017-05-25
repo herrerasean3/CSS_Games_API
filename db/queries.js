@@ -181,6 +181,36 @@ function createGame(req, res, next) {
     });
 }
 
+function editGame(req, res, next) {
+	db.none('UPDATE games SET game_title = ${game_title}, game_cover = ${game_cover}, game_genre = ${game_genre}, game_desc_short = ${game_desc_short}, game_desc = ${game_desc} WHERE game_id =' + `${req.params.gameid}`, 
+		req.body)
+	.then(function() {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: 'Game Updated'
+        });
+    })
+    .catch(function(err) {
+      return next(err);
+    });
+}
+
+function deleteGame(req, res, next) {
+db.result('DELETE FROM games WHERE game_id = $1', req.params.gameid)
+	.then(function(result) {
+      res.status(200)
+        .json({
+          status: 'success',
+          message: `Removed Game at ${result.rowCount}`
+        });
+    })
+    .catch(function(err) {
+      return next(err);
+    });
+}
+
+
 /*
 
 ______ _____ _   _ _____ _____ _    _ _____ 
@@ -237,18 +267,13 @@ function submitReview(req, res, next) {
 // Called when a DELETE request request is sent to '/reply/:id'.
 // Only deletes specific posts, so as to avoid easy bulk post wiping.
 
-function deletePost(req, res, next) {
-	let targetID = parseInt(req.params.id) + 1;
-	if (targetID < 2) {
-		targetID = 2;
-	}
-
-	db.result('DELETE FROM tweed WHERE tweed_id = $1', targetID)
+function deleteReview(req, res, next) {
+db.result('DELETE FROM reviews WHERE review_id = $1', req.params.reviewid)
 	.then(function(result) {
       res.status(200)
         .json({
           status: 'success',
-          message: `Removed Tweed at ${result.rowCount}`
+          message: `Removed Review at ${result.rowCount}`
         });
     })
     .catch(function(err) {
@@ -259,19 +284,14 @@ function deletePost(req, res, next) {
 // Called when a PUT request is sent to '/reply/:id'.
 // Uses identical arguments to the POST functions up above.
 
-function editPost(req, res, next) {
-	let targetID = parseInt(req.params.id) + 1;
-	if (targetID < 2) {
-		targetID = 2;
-	}
-
-	db.none('UPDATE tweed SET username = $1, tweed_content = $2 WHERE tweed_id = $3',
-		[req.body.username, req.body.tweed_content, targetID])
+function editReview(req, res, next) {
+	db.none('UPDATE reviews SET username = ${username}, review_short = ${review_short}, review = ${review}, review_score = ${review_score} WHERE review_id =' + `${req.params.reviewid}`,
+		req.body)
 	.then(function() {
       res.status(200)
         .json({
           status: 'success',
-          message: 'Tweed Updated'
+          message: 'Review Updated'
         });
     })
     .catch(function(err) {
@@ -288,8 +308,9 @@ module.exports = {
 	getAllGames: getAllGames,
 	getSingleGame: getSingleGame,
 	createGame: createGame,
+	editGame: editGame,
 	readReviews: readReviews,
 	submitReview: submitReview,
-	deletePost: deletePost,
-	editPost: editPost
+	deleteReview: deleteReview,
+	editReview: editReview
 };
