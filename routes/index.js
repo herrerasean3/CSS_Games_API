@@ -6,9 +6,9 @@ var db = require('../db/queries');
 /* GET home page. */
 
 //Game Routes
-
 router.get('/game', db.getAllGames);
 router.get('/game/:gameid', db.getSingleGame);
+router.get('/search', db.searchGame);
 
 router.post('/game', db.createGame);
 

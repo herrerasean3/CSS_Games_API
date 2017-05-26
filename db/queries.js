@@ -210,6 +210,20 @@ db.result('DELETE FROM games WHERE game_id = $1', req.params.gameid)
     });
 }
 
+function searchGame(req, res, next) {
+	db.any(`SELECT * FROM games WHERE "game_title" ILIKE '%${req.query.title}%'`)
+	    .then(function(data) {
+	    	console.log('DATA:', data);
+	    	res.status(200)
+	    	.json({
+	    		games: data
+	    	});
+	    })
+	    .catch(function(err) {
+	    	return next(err);
+	    });
+}
+
 
 /*
 
@@ -310,6 +324,7 @@ module.exports = {
 	createGame: createGame,
 	editGame: editGame,
 	deleteGame: deleteGame,
+	searchGame: searchGame,
 	readReviews: readReviews,
 	submitReview: submitReview,
 	deleteReview: deleteReview,
