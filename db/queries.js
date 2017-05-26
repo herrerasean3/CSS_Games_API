@@ -211,7 +211,7 @@ db.result('DELETE FROM games WHERE game_id = $1', req.params.gameid)
 }
 
 function searchGame(req, res, next) {
-	db.any(`SELECT * FROM games WHERE "game_title" ILIKE '%${req.query.title}%'`)
+	db.any(`SELECT * FROM games WHERE "game_title" ILIKE '%${req.query.title}%' ORDER BY game_id DESC`)
 	    .then(function(data) {
 	    	console.log('DATA:', data);
 	    	res.status(200)
