@@ -124,40 +124,58 @@ function populateCovers() {
 */
 
 function getAllGames(req, res, next) {
-	db.any('SELECT * FROM games ORDER BY game_id DESC')
-	.then(function(data) {
-			res.status(200)
-			.json({
-				status: 'success',
-				game: data
-			});
+	db.task(t => {
+		return t.batch([
+			t.any('SELECT * FROM games ORDER BY game_id DESC'),
+			t.any('SELECT * FROM games JOIN genres ON games.game_genre = genres.genre_id ORDER BY game_id DESC'),
+			t.any('SELECT * FROM genres')
+			])
 		})
-		.catch(function(err) {
-			return next(err);
-		});
-}
-
-function getGamesByGenre(req, res, next) {
-	db.any('SELECT * FROM games JOIN genres ON games.game_genre = genres.genre_id')
-	.then(function(data) {
-			res.status(200)
-			.json({
-				status: 'success',
-				game: data
-			});
-		})
-		.catch(function(err) {
-			return next(err);
-		});
-}
-
-function getSingleGame(req, res, next) {
-			db.one('SELECT * FROM games WHERE game_id = $1', req.params.gameid)
 	.then(data => {
 			res.status(200)
 			.json({
 				status: 'success',
-				game: data
+				game: data[0],
+				genregames: data[1],
+				genres: data[2]
+			});
+		})
+		.catch(function(err) {
+			return next(err);
+		});
+}
+
+// function getGamesByGenre(req, res, next) {
+// 	db.
+// 	.then(function(data) {
+// 			res.status(200)
+// 			.json({
+// 				status: 'success',
+// 				game: data
+// 			});
+// 		})
+// 		.catch(function(err) {
+// 			return next(err);
+// 		});
+// }
+
+function getSingleGame(req, res, next) {
+	db.task(t => {
+		return t.batch([
+			t.one('SELECT * FROM games WHERE game_id = $1', req.params.gameid),
+			t.any('SELECT * FROM games JOIN genres ON games.game_genre = genres.genre_id WHERE game_id = $1', req.params.gameid),
+			t.any('SELECT * FROM genres'),
+			t.any('SELECT * FROM reviews WHERE target_id = $1 ORDER BY review_timestamp DESC, review_id DESC', req.params.gameid)
+			])
+	})
+	.then(data => {
+			res.status(200)
+			.json({
+				status: 'success',
+				game: data[0],
+				genregame: data[1],
+				genres: data[2],
+				reviews: data[3]
 			});
 		})
 		.catch(function(err) {
