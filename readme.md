@@ -1,40 +1,73 @@
-# ACCESSING TWEEDR API
+# CSSGAMES API
 
-Tweedr API's built with simplicity in mind!
+Built by gamers for gamers, CSSGAMES API is so easy, a sleep deprived dork like yours truly can access it just fine!
 
-When a GET request is made, the request is split into one of two types.
-
-GET requests to the index of the API returns all Tweeds submitted, sorted by Timestamp, then ID.
-
-Posts are returned as objects within ```data```, so one may access a posts values using ```data[i].value```, where i is their target post in the array and value is one of the valid values the API uses, which can be found below.
-
-GET requests to ```/replies/:id``` will return a tweed at a specific ID. Functionally, this will be the parameter ID + 1, as post ID 1 is unlisted and reserved for a placeholder that all brand new posts are 'replies' to, and IDs lower than 1 return errors due to how databases handle SERIAL PRIMARY KEYS. To this end, a parameter ID lower than 2 after being targetted and adding 1 to it will instead become 2, to prevent errors from checking below bounds on the table.
-
-When checking replies, the original post is returned within ```OP```, and replies are returned as an array within ```replies```.
+The API is in a very much indev state, but currently supports the submission, accessing, editing, and deleting of games and reviews.
 
 ## Values that can be accessed are:
+
+### 'games' Table:
+
+These values can be found at ```/game``` on our API.
+For a specific game, try ```/game/:gameid```
+
 ```
-'tweed_id' - ID of the target post. Used for organization and for the reply system.
+'game_id' - ID of the target game. Used for serving up and organizing data. Also referenced for the review system. SERIAL PRIMARY KEY
 
-'username' - Name of user that submitted the post. Should auth0 be implemented, this would be referenced to another table as a username_id instead, but for now users simply write in a username when they submit a post.
+'game_title' - The title of the game. Used in our search function. VARCHAR.
 
-'tweed_content' - Textual content of a tweed. In the spirit of being off-brand twitter, this is limited to 120 characters.
+'game_genre' - References the genre table to determine what genre a game has. INTEGER REFERENCES.
 
-'tweed_timestamp' - Automatically generated timestamp for a post. There's no implemented way to edit this, so as to prevent abuse of recordkeeping mechanics.
+'game_desc_short' - Short summary of the game. VARCHAR.
 
-"reply_id" - References "the tweed_id" column, noting that this post is a reply to the tweed with that particular ID. By default, this value is set to 1, noting that it is a reply to the unlisted and inaccessible placeholder post.
+'game_desc' - Long summary of the game. VARCHAR.
 ```
 
-# Submitting a new post or reply
+### 'genres' Table:
 
-A new tweed may be submitted by sending a POST request to the index of the API. Likewise, a new reply may be submitted with a POST request to ```/reply/:id```.
+The genres table is inaccessible on its own.
+However, one may find them returned via queries to ```/game```
 
-As the tweed_id, tweed_timestamp, and reply_id values are automatically generated when the request is processed, only a username and tweed_content are needed.
+```
+'genre_id' - ID of the target genre. Referenced by 'game_genre' on the 'games' table. SERIAL PRIMARY KEY.
 
-# Editing or Deleting a post
+'genre' - Name of the genre. VARCHAR.
+```
 
-Editing a tweed may be done via submitting a PUT request to ```/:id```
+### 'reviews' Table:
 
-The username and tweed_content may be edited, while automatically generated values may not.
+A specific game's reviews may be found via a request to ```/game/:gameid``` or ```game/:gameid/reviews```.
 
-To delete a tweed, send a DELETE request to ```/:id```.
+```
+'review_id' - Assigned ID for the target game. SERIAL PRIMARY KEY.
+
+'username' - Name of user that submitted the post. Should auth0 be implemented, this would be referenced to another table as a username_id instead, but for now users simply write in a username when they submit a post. Character limit of 20. VARCHAR(20).
+
+'review_short' - Intended to be the brief form of the review, but not actually capped. VARCHAR.
+
+'review' - The review proper. Also VARCHAR.
+
+'review_score' - A numeric score for the game. Range determined by whomever is using this API. I personally prefer ranges of 0 to 10 myself. INTEGER.
+
+'review_timestamp' - Automatically generated timestamp for a review. There's no implemented way to edit this, so as to prevent abuse of recordkeeping mechanics.
+
+'target_id' - References the 'game_id' column in 'games', noting that this review is for a specific game. This cannot be edited later, so make sure you're reviewing the right games!
+```
+
+## Submitting a new game or review.
+
+A new game may be submitted by sending a POST request to ```/game``` on the API. Games use these values:
+game_title, game_cover, game_genre, game_desc_short, and game_desc.
+Make sure game_genre is an integer!
+
+A new review may be submitted by sending a POST request to ```/game/:gameid/reviews```. Reviews use these values: 
+username, review_short, review and review_score.
+Make sure review_score is an integer as well!
+
+## Editing or Deleting a game or review:
+
+Editing a game may be done via submitting a PUT request to ```/game/:gameid```, and a review may be edited by sending a PUT request to ```/review/:reviewid'```
+
+Automatically generated values may not be edited.
+
+To delete a game, send a DELETE request to ```/game/:gameid```, and a game may be deleted by sending a DELETE request to ```/review/:reviewid'```
