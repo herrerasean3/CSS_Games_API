@@ -4,21 +4,6 @@ let db = pgp(connString);
 var unirest = require('unirest');
 
 /*
-Tweedr uses a single table database. To this end, all relevant data is contained in the table "tweed".
-The table is organized like so:
-
-tweed_id | username | tweed_content | tweed_timestamp | reply_id
-
-tweed_id, tweed_timestamp, and reply_id are automatically resolved by the code, and are by default, impossible to edit.
-This serves to ensure preservation of some post data, even if the username and content have been altered.
-
-username is a VARCHAR field, and currently is uncapped. Please avoid colossal usernames.
-tweed_content is also a VARCHAR field, but limited to 120 characters in the spirit of Twitter.
-*/
-
-
-
-/*
 
 ______ ___________ _   _ _       ___ _____ _____ 
 | ___ \  _  | ___ \ | | | |     / _ \_   _|  ___|
@@ -37,7 +22,6 @@ ______ ___________ _   _ _       ___ _____ _____
 // Due to how IGDB is set up, this populates the first 50 game titles.
 // IGDB doesn't return Null for content that a game lacks, leaving an entire column empty.
 // Hence, the populate functions are an elaborate workaround for this design flaw.
-// As a protip to any would-be API designer, please just make your stuff return null if it's missing and these values are expected to be in your JSON.
 // Call this before all other populate functions or you'll be an unhappy camper.
 
 function populateGames() {
@@ -78,8 +62,8 @@ function populateGenres() {
 }
 
 // Populates the Summaries for our previously pulled games.
-// By exploiting how pg-promise handles errors, we can use skip over games that lack summaries and still accurately pull down summaries.
-// Summaries are stored as "game_desc_short"
+// By exploiting how pg-promise handles errors, we can skip over games that lack summaries and still accurately pull down summaries.
+// Summaries are stored as "game_desc_short".
 
 function populateSummaries() {
 	// These code snippets use an open-source library. http://unirest.io/nodejs
@@ -278,7 +262,7 @@ function searchGame(req, res, next) {
 	    	.json({
 	    		games: data[0],
 	    		genregames: data[1],
-	    		genres: [2]
+	    		genres: data[2]
 	    	});
 	    })
 	    .catch(function(err) {
